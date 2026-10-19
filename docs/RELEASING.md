@@ -1,6 +1,6 @@
 # Signing and GitHub releases
 
-The public source and release repository is https://github.com/eyedocnyc/kobra-drop. No release, production credentials, or signing key is configured yet. Development builds never contact placeholder URLs. The first Windows install is manual; later configured builds can update themselves.
+The public source and release repository is https://github.com/eyedocnyc/kobra-drop. Production updater signing is configured in GitHub Actions secrets; the public key is stored in the repository variable. Releases remain drafts until manually published. Development builds never contact placeholder URLs. The first Windows install is manual; later configured builds can update themselves.
 
 ## One-time setup for the parent/maintainer
 
