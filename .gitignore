@@ -1,0 +1,10 @@
+node_modules/
+dist/
+src-tauri/target/
+src-tauri/gen/
+target/
+.local/
+*.3mf
+*.key
+*.pem
+.env*
