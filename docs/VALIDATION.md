@@ -55,7 +55,7 @@ The native flow/temperature/pressure values above were checked directly against 
 - Import the result **as a project** into Anycubic Slicer Next. Confirm the Kobra X 0.4 mm machine, plate assignments, scale, assemblies, modifiers, color painting, support painting, and variable layer heights. Select the actual filament profile for every slot; slice and inspect Preview. No successful import/slice should be inferred from archive validation alone.
 - Test the actual signed N → N+1 installer update using a private staging/review release and the production public key. Verify relaunch, preserved preferences/files, corrupted signatures, offline startup, and deferral with a selected file and during conversion. A separate staging repository/key is preferable to publishing test artifacts as stable production releases.
 
-No production release has been published. No physical print has been certified by these automated checks.
+The maintainer authorized publishing v0.1.0 after confirming installer and conversion operation and backing up the signing key. End-to-end automatic update testing was explicitly deferred. No physical print has been certified by these automated checks.
 
 ## Production draft packaging
 

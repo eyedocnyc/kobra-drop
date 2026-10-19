@@ -1,6 +1,6 @@
 # Kobra Drop 0.1.0
 
-Initial Windows x64 release candidate for Anycubic Slicer Next and the Anycubic Kobra X with a 0.4 mm nozzle.
+Initial Windows x64 release for Anycubic Slicer Next and the Anycubic Kobra X with a 0.4 mm nozzle.
 
 - Drop or choose an editable MakerWorld/Bambu 3MF and convert it entirely locally.
 - Preserve mesh geometry, component transforms, plate assignments, painting, supported object/modifier settings, and compatible variable layer heights.
@@ -11,6 +11,6 @@ Initial Windows x64 release candidate for Anycubic Slicer Next and the Anycubic 
 
 The corrected dragon-egg fixture passed user-reported silk PLA selection and slicing, as well as an automated import/export check with the installed slicer. The filament metadata import defect found during manual testing is fixed in this candidate.
 
-The GitHub-built draft installer has a verified production Tauri updater signature and the public update endpoint configured. It is not Windows Authenticode signed. Earlier development packages have updates unconfigured. Actual installer/update testing remains a release gate. No release has been published.
+The GitHub-built installer has a verified production Tauri updater signature and the public update endpoint configured. It is not Windows Authenticode signed. Earlier development packages have updates unconfigured. The installer and conversion were confirmed working by the user. End-to-end automatic updating has not been tested; the maintainer chose to publish without that test.
 
-macOS is a proposed follow-up platform and is not supported by this package. See [platform assessment](docs/PLATFORMS.md).
+macOS is a proposed follow-up platform and is not supported by this package. See [platform assessment](https://github.com/eyedocnyc/kobra-drop/blob/main/docs/PLATFORMS.md).
