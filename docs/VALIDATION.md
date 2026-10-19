@@ -56,3 +56,8 @@ The native flow/temperature/pressure values above were checked directly against 
 - Test the actual signed N → N+1 installer update using a private staging/review release and the production public key. Verify relaunch, preserved preferences/files, corrupted signatures, offline startup, and deferral with a selected file and during conversion. A separate staging repository/key is preferable to publishing test artifacts as stable production releases.
 
 No production release has been published. No physical print has been certified by these automated checks.
+
+## Production draft packaging
+
+The Windows GitHub release workflow passed and created an unpublished v0.1.0 draft. Its downloaded installer was verified against the production updater public key, including the authenticated version; a modified payload was rejected. Its SHA-256 matched GitHub's asset digest. The updater manifest uses a stable filename matching the uploaded installer; a regression test covers filename normalization and repeated generation. Local protected-password recovery was tested. These checks do not establish successful installer execution or an end-to-end installed update.
+

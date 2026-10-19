@@ -11,6 +11,6 @@ Initial Windows x64 release candidate for Anycubic Slicer Next and the Anycubic 
 
 The corrected dragon-egg fixture passed user-reported silk PLA selection and slicing, as well as an automated import/export check with the installed slicer. The filament metadata import defect found during manual testing is fixed in this candidate.
 
-Local packages are unsigned and have automatic-update endpoints unconfigured. Public signed updates require the destination repository and production signing configuration. Installer/update testing remains a release gate. No release has been published.
+The GitHub-built draft installer has a verified production Tauri updater signature and the public update endpoint configured. It is not Windows Authenticode signed. Earlier development packages have updates unconfigured. Actual installer/update testing remains a release gate. No release has been published.
 
 macOS is a proposed follow-up platform and is not supported by this package. See [platform assessment](docs/PLATFORMS.md).
