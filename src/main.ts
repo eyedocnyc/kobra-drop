@@ -31,6 +31,7 @@ let pending: string | null = null,
   selecting = false,
   installing = false,
   checking = false,
+  resultShown = false,
   ready: Update | null = null;
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `<main><header><span class="mark" aria-hidden="true">K</span><div><h1>Kobra Drop</h1><p>MakerWorld projects, ready for your Kobra X.</p></div><span class="badge">0.4 mm</span></header>
@@ -67,6 +68,7 @@ async function select(path: string | null) {
   try {
     await invoke("select_file", { path });
     pending = path;
+    resultShown = false;
     el("result").hidden = true;
     status(path ? "Ready to convert." : "Choose a 3MF project.");
   } catch (e) {
@@ -112,6 +114,7 @@ el("convert").onclick = async () => {
     el("details").textContent = result.details;
     el("review").textContent = result.warnings.join(" ");
     el("result").hidden = false;
+    resultShown = true;
     status("Converted and verified. Your original is unchanged.");
   } catch (e) {
     status(String(e), true);
@@ -125,6 +128,8 @@ el("open").onclick = async () => {
   try {
     await invoke("open_in_slicer");
     status("Opened in Anycubic Slicer Next. Import as a project.");
+    resultShown = false;
+    void installWhenIdle();
   } catch (e) {
     status(String(e), true);
     el<HTMLDetailsElement>("settings").open = true;
@@ -186,7 +191,13 @@ async function installWhenIdle() {
   if (
     !ready ||
     prefs.automatic_updates === false ||
-    !canInstall({ converting, pending: !!pending, selecting, installing })
+    !canInstall({
+      converting,
+      pending: !!pending,
+      selecting,
+      installing,
+      resultShown,
+    })
   )
     return;
   installing = true;
@@ -247,6 +258,8 @@ el("check-update").onclick = () => void checkUpdates(true);
 await listen<string>("conversion-progress", (event) => status(event.payload));
 await listen<string>("open-file", (event) => {
   pending = event.payload;
+  resultShown = false;
+  el("result").hidden = true;
   controls();
   status("Ready to convert.");
 });

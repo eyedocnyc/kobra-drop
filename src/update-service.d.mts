@@ -1,4 +1,5 @@
 import type { Update, CheckOptions } from "@tauri-apps/plugin-updater";
+export const DOWNLOAD_TIMEOUT_MS: number;
 export function fetchVerifiedUpdate(options: {
   configured: boolean;
   automatic: boolean;

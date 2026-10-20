@@ -12,12 +12,15 @@ test("stable versions advance, with no downgrades or prereleases", () => {
   ])
     assert.equal(newerStable(a, b), result);
 });
-test("conversion, pending selection, file dialog and install all defer installation", () => {
+test("conversion, pending selection, file dialog, shown result and install all defer installation", () => {
   const idle = {
     converting: false,
     pending: false,
     selecting: false,
     installing: false,
+    // A just-converted result must stay on screen until the user opens or
+    // dismisses it; installing exits the app.
+    resultShown: false,
   };
   assert.equal(canInstall(idle), true);
   for (const key of Object.keys(idle))

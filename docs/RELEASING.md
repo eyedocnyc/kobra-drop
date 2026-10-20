@@ -16,7 +16,7 @@ Updater signatures authenticate downloaded update artifacts. **Windows Authentic
 
 Keep the version in `Cargo.toml`, `package.json`, `package-lock.json`, and `src-tauri/tauri.conf.json` aligned. Update the lockfiles through the package managers, run the tests, then push a matching stable tag such as `v0.1.0`.
 
-The release workflow tests the conversion core, updater policy and frontend, checks the Windows backend, builds a current-user NSIS installer, and uses the official Tauri signer to produce `-setup.exe.sig`. `scripts/manifest.mjs` creates `latest.json` with the signed installer URL under public HTTPS GitHub Releases downloads. The `windows-x86_64` platform is targeted. Signing variables are available only in the tag-build job. There is no GitHub credential in the app.
+The release workflow tests the conversion core, updater policy and frontend, checks the Windows backend, builds a current-user NSIS installer, and uses the official Tauri signer to produce `-setup.exe.sig`. `scripts/manifest.mjs` creates `latest.json` with the signed installer URL under public HTTPS GitHub Releases downloads. The `windows-x86_64` platform is targeted. Signing secrets are exposed only to the single build step that runs the Tauri bundler, not to dependency installation or other steps. Checkout does not persist the job token, and workflow actions are pinned to full commit SHAs. There is no GitHub credential in the app.
 
 The workflow creates a **draft** release, uploads the installer, signature, and manifest, and does not publish it. Review artifacts and perform installation/import/update tests, then publish the draft manually. Non-tag workflow dispatch runs validation only. Published GitHub releases marked prerelease are not selected by `/releases/latest`; the app independently rejects prerelease/non-increasing versions.
 
@@ -24,11 +24,11 @@ For subsequent releases, retain the same production signing key, identifier, and
 
 ## Updater design
 
-Startup schedules a check asynchronously, with an 8-second check timeout. Download has a separate 120-second timeout. Conversion remains local and usable when offline, the endpoint is unavailable, or verification fails. Automatic updates can be disabled; **Check for updates** remains available. Manual checking while automatic installation is disabled downloads a verified update and instructs the user to enable automatic updates to install it.
+Startup schedules a check asynchronously, with an 8-second check timeout. Download has a separate 30-minute timeout; Tauri applies it to the whole request, and the NSIS update includes the offline WebView2 installer (about 210 MiB). Conversion remains local and usable when offline, the endpoint is unavailable, or verification fails. Automatic updates can be disabled; **Check for updates** remains available. Manual checking while automatic installation is disabled downloads a verified update and instructs the user to enable automatic updates to install it.
 
 Only a strictly newer stable version is accepted. The official updater checks the public-key signature, and production configuration requires the version embedded in the signature's authenticated trusted comment to equal the manifest version. This prevents substituting an old signed artifact under an inflated version number. Do not disable `requireSignedVersion` or enable downgrades.
 
-Downloading is separate from installation. Pending files, active conversions, and file dialogs defer installation. An idle reservation in Rust excludes conversion or file selection while installing. On Windows Tauri exits before launching the installer; passive NSIS installation requests relaunch automatically. The frontend's explicit relaunch is a fallback for platforms where install returns. A failed conversion retains its file selection and continues to defer updates. Preferences and user files are not removed by the updater.
+Downloading is separate from installation. Pending files, active conversions, file dialogs, and a just-converted result that has not yet been opened or replaced defer installation. An idle reservation in Rust excludes conversion or file selection while installing. On Windows Tauri launches the installer and then exits the app; passive NSIS installation requests relaunch automatically. The frontend's explicit relaunch is a fallback for platforms where install returns. A failed conversion retains its file selection and continues to defer updates. Preferences and user files are not removed by the updater.
 
 Official references checked during implementation:
 

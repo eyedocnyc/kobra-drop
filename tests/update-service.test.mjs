@@ -73,7 +73,9 @@ test("only newer stable releases download; verification completes before ready",
   const update = {
     version: "0.2.0",
     download: async (_, options) => {
-      assert.equal(options.timeout, 120000);
+      // Tauri's timeout bounds the whole request. The NSIS update bundles the
+      // offline WebView2 installer (~210 MiB); allow 2 Mbit/s (~880 s).
+      assert.ok(options.timeout >= 900000, `download timeout ${options.timeout} ms`);
       complete = true;
     },
     close: async () => {},

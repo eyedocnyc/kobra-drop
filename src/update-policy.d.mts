@@ -4,4 +4,5 @@ export function canInstall(state: {
   pending: boolean;
   selecting: boolean;
   installing: boolean;
+  resultShown: boolean;
 }): boolean;
