@@ -242,6 +242,19 @@ fn filter_layer_events(text: &str, slots: usize, notes: &mut Vec<String>) -> Res
     Ok(out)
 }
 
+/// Preset identity written by `transform` itself; differences are not design changes.
+const REWRITTEN: &[&str] = &[
+    "name",
+    "version",
+    "from",
+    "inherits",
+    "inherits_group",
+    "different_settings_to_system",
+    "print_settings_id",
+    "printer_settings_id",
+    "print_compatible_printers",
+];
+
 pub fn transform(entries: &mut archive::Entries, target: &Target) -> Result<Audit> {
     let source: Settings=serde_json::from_slice(entries.get("Metadata/project_settings.config").context("Missing editable project settings; G-code packages and geometry-only archives cannot be converted")?)?;
     let mut notes = Vec::new();
@@ -264,11 +277,20 @@ pub fn transform(entries: &mut archive::Entries, target: &Target) -> Result<Audi
             out.insert(k, value);
         } else if !target.machine.contains_key(key)
             && !key.starts_with("filament_")
-            && !out.contains_key(key)
+            && !policy::supported(key)
+            && !REWRITTEN.contains(&key.as_str())
         {
-            notes.push(format!(
-                "Dropped project setting {key}: not in the reviewed compatible process allowlist"
-            ));
+            // A native process value that differs from the source still discards
+            // the designer's choice, so it is reported like a missing key.
+            match out.get(key) {
+                None => notes.push(format!(
+                    "Dropped project setting {key}: not in the reviewed compatible process allowlist"
+                )),
+                Some(native) if scalar(native) != scalar(value) => notes.push(format!(
+                    "Dropped project setting {key}: not in the reviewed compatible process allowlist; the Kobra X default is used instead"
+                )),
+                Some(_) => {}
+            }
         }
     }
     // Never permit embedded scripts or executable post-process paths from the input.
@@ -307,7 +329,7 @@ pub fn transform(entries: &mut archive::Entries, target: &Target) -> Result<Audi
             let text = std::str::from_utf8(bytes)?;
             let filtered = policy::sanitize_overrides(text, target, slots, &mut notes)?;
             // Layer-range configs also use <option opt_key="..."> syntax.
-            let filtered = sanitize_options(&filtered, target, &mut notes)?;
+            let filtered = sanitize_options(&filtered, target, slots, &mut notes)?;
             changed.push((name.clone(), filtered.into_bytes()));
         } else if name == "Metadata/layer_heights_profile.txt" {
             layer_profile(bytes, target)?;
@@ -430,7 +452,12 @@ pub fn validate_project_metadata(settings: &Settings, slots: usize) -> Result<()
     Ok(())
 }
 
-fn sanitize_options(text: &str, target: &Target, notes: &mut Vec<String>) -> Result<String> {
+fn sanitize_options(
+    text: &str,
+    target: &Target,
+    slots: usize,
+    notes: &mut Vec<String>,
+) -> Result<String> {
     let doc = roxmltree::Document::parse(text)?;
     let mut edits = Vec::new();
     for node in doc.descendants().filter(|n| n.has_tag_name("option")) {
@@ -438,6 +465,16 @@ fn sanitize_options(text: &str, target: &Target, notes: &mut Vec<String>) -> Res
             .attribute("opt_key")
             .context("Unknown layer range option syntax")?;
         let val = node.text().unwrap_or("");
+        if key == "extruder" {
+            // Per-range filament assignment is color design, not a process setting.
+            let n: usize = val.trim().parse().context("Invalid layer-range filament")?;
+            ensure!(n <= slots, "Layer range uses missing filament slot {n}");
+            edits.push((
+                node.range(),
+                format!("<option opt_key=\"extruder\">{n}</option>"),
+            ));
+            continue;
+        }
         let replacement = match policy::transfer(key, &Value::String(val.into()), target, notes)? {
             Some(v) => format!(
                 "<option opt_key=\"{}\">{}</option>",

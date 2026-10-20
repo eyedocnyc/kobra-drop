@@ -367,3 +367,95 @@ fn native_filament_ids_do_not_abort_import_before_temperatures_and_quality() {
     malformed.insert("filament_id".into(), json!(["BAD_ARRAY"]));
     assert!(kobra_converter::validate_project_metadata(&malformed, 2).is_err());
 }
+
+#[test]
+fn non_allowlisted_settings_replaced_by_native_defaults_are_reported() {
+    let mut c = catalog();
+    let process = c
+        .items
+        .get_mut(&("process".into(), "standard".into()))
+        .unwrap();
+    process.insert("fuzzy_skin".into(), json!("none"));
+    process.insert("precise_outer_wall".into(), json!("0"));
+    let mut e = fixture();
+    let mut p: Value = serde_json::from_slice(&e["Metadata/project_settings.config"]).unwrap();
+    p["fuzzy_skin"] = json!("external");
+    p["precise_outer_wall"] = json!("0");
+    p["print_settings_id"] = json!("0.20mm Standard @BBL P1S");
+    e.insert(
+        "Metadata/project_settings.config".into(),
+        serde_json::to_vec(&p).unwrap(),
+    );
+    let audit = transform(&mut e, &c.target().unwrap()).unwrap();
+    let out: Value = serde_json::from_slice(&e["Metadata/project_settings.config"]).unwrap();
+    assert_eq!(out["fuzzy_skin"], "none");
+    assert!(audit
+        .notes
+        .iter()
+        .any(|n| n.starts_with("Dropped project setting fuzzy_skin")));
+    // Equal values and rewritten preset identity are not design changes.
+    assert!(!audit
+        .notes
+        .iter()
+        .any(|n| n.contains("precise_outer_wall") || n.contains("print_settings_id")));
+}
+
+fn with_part(e: &mut Entries, z: &str, subtype: &str) {
+    let mesh = String::from_utf8(e["3D/Objects/mesh.model"].clone())
+        .unwrap()
+        .replace("</resources>", &format!(r#"<object id="3"><mesh><vertices><vertex x="0" y="0" z="{z}"/><vertex x="5" y="0" z="{z}"/><vertex x="0" y="5" z="2"/></vertices><triangles><triangle v1="0" v2="1" v3="2"/></triangles></mesh></object></resources>"#));
+    e.insert("3D/Objects/mesh.model".into(), mesh.into_bytes());
+    let root = String::from_utf8(e["3D/3dmodel.model"].clone())
+        .unwrap()
+        .replace(
+            "</components>",
+            r#"<component objectid="3" p:path="/3D/Objects/mesh.model"/></components>"#,
+        );
+    e.insert("3D/3dmodel.model".into(), root.into_bytes());
+    let cfg = String::from_utf8(e["Metadata/model_settings.config"].clone())
+        .unwrap()
+        .replace(
+            "</object>",
+            &format!(r#"<part id="3" subtype="{subtype}"></part></object>"#),
+        );
+    e.insert("Metadata/model_settings.config".into(), cfg.into_bytes());
+}
+
+#[test]
+fn modifier_volumes_outside_the_bed_do_not_affect_fit() {
+    for subtype in [
+        "modifier_part",
+        "negative_part",
+        "support_blocker",
+        "support_enforcer",
+    ] {
+        let mut e = fixture();
+        with_part(&mut e, "-3", subtype);
+        let audit = transform(&mut e, &catalog().target().unwrap()).unwrap();
+        assert_eq!(audit.plates[0].translation, [0., 0.], "{subtype}");
+        assert_eq!(audit.plates[0].bounds.min[2], 0., "{subtype}");
+    }
+    let mut e = fixture();
+    with_part(&mut e, "-3", "normal_part");
+    assert!(transform(&mut e, &catalog().target().unwrap())
+        .unwrap_err()
+        .to_string()
+        .contains("below the bed"));
+}
+
+#[test]
+fn layer_range_filament_assignments_are_retained_and_checked() {
+    let ranges = |extruder: &str| {
+        format!(r#"<?xml version="1.0" encoding="utf-8"?><objects><object id="2"><range min_z="2" max_z="5"><option opt_key="extruder">{extruder}</option><option opt_key="layer_height">0.2</option><option opt_key="nozzle_temperature">299</option></range></object></objects>"#).into_bytes()
+    };
+    let mut e = fixture();
+    e.insert("Metadata/layer_config_ranges.xml".into(), ranges("2"));
+    transform(&mut e, &catalog().target().unwrap()).unwrap();
+    let out = String::from_utf8(e["Metadata/layer_config_ranges.xml"].clone()).unwrap();
+    assert!(out.contains(r#"<option opt_key="extruder">2</option>"#));
+    assert!(out.contains(r#"<option opt_key="layer_height">0.2</option>"#));
+    assert!(!out.contains("299"));
+    let mut e = fixture();
+    e.insert("Metadata/layer_config_ranges.xml".into(), ranges("9"));
+    assert!(transform(&mut e, &catalog().target().unwrap()).is_err());
+}

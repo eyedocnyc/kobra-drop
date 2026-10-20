@@ -240,10 +240,40 @@ pub fn inspect(entries: &Entries) -> Result<Geometry> {
             }
         }
     }
+    // Modifiers, negative parts and support blockers/enforcers are not printed,
+    // so the slicer ignores them for bed placement. They are still validated.
+    let mut helpers = HashSet::<(String, String)>::new();
+    if let Some(config) = entries.get("Metadata/model_settings.config") {
+        let doc = roxmltree::Document::parse(std::str::from_utf8(config)?)?;
+        for object in doc.descendants().filter(|n| n.has_tag_name("object")) {
+            let Some(id) = object.attribute("id") else {
+                continue;
+            };
+            for part in object.children().filter(|n| n.has_tag_name("part")) {
+                let helper = matches!(
+                    part.attribute("subtype"),
+                    Some(
+                        "modifier_part" | "negative_part" | "support_blocker" | "support_enforcer"
+                    )
+                ) || matches!(
+                    meta(part, "volume_type"),
+                    Some(
+                        "ModifierVolume" | "NegativeVolume" | "SupportBlocker" | "SupportEnforcer"
+                    )
+                );
+                if let (true, Some(part)) = (helper, part.attribute("id")) {
+                    helpers.insert((id.to_string(), part.to_string()));
+                }
+            }
+        }
+    }
+    #[allow(clippy::too_many_arguments)]
     fn expand(
         key: &(String, String),
         m: &Matrix,
         obs: &HashMap<(String, String), Object>,
+        helpers: &HashSet<(String, String)>,
+        printed: bool,
         active: &mut HashSet<(String, String)>,
         budget: &mut usize,
         bounds: &mut Bounds,
@@ -266,13 +296,19 @@ pub fn inspect(entries: &Entries) -> Result<Geometry> {
                 p.iter().all(|x| x.is_finite() && x.abs() < 1e8),
                 "Transformed coordinate exceeds limits"
             );
-            bounds.add(p);
+            if printed {
+                bounds.add(p);
+            }
         }
         for (file, id, child) in &o.components {
+            // model_settings part IDs name the root object's component object IDs.
+            let root = key.0 == "3D/3dmodel.model";
             expand(
                 &(file.clone(), id.clone()),
                 &compose(child, m),
                 obs,
+                helpers,
+                printed && !(root && helpers.contains(&(key.1.clone(), id.clone()))),
                 active,
                 budget,
                 bounds,
@@ -293,6 +329,8 @@ pub fn inspect(entries: &Entries) -> Result<Geometry> {
             &("3D/3dmodel.model".into(), id.clone()),
             &transform,
             &objects,
+            &helpers,
+            true,
             &mut HashSet::new(),
             &mut budget,
             &mut bounds,
