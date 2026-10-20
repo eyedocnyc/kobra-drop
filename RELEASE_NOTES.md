@@ -1,16 +1,16 @@
-# Kobra Drop 0.1.0
+# Kobra Drop 0.1.1
 
-Initial Windows x64 release for Anycubic Slicer Next and the Anycubic Kobra X with a 0.4 mm nozzle.
+Windows x64 maintenance release for Anycubic Slicer Next and Kobra X 0.4 mm.
 
-- Drop or choose an editable MakerWorld/Bambu 3MF and convert it entirely locally.
-- Preserve mesh geometry, component transforms, plate assignments, painting, supported object/modifier settings, and compatible variable layer heights.
-- Use installed native Kobra X machine and material profiles. Preserve compatible design settings and cap transferred motion values.
-- Save a separate verified project and readable report beside the original.
-- Open the result in Anycubic Slicer Next. Choose the actual filament profile, slice, and check Preview.
-- Include a current-user Windows installer and prepared GitHub signed-update automation.
+- Report designer settings replaced with differing native defaults.
+- Preserve valid layer-range filament/color assignments.
+- Exclude identified modifier, negative, and support-helper volumes from printable bounds while validating their geometry.
+- Keep conversion results visible until opened or replaced when an update is ready.
+- Allow 30 minutes for update downloads in this version and later.
+- Narrow signing-secret exposure and pin GitHub Actions dependencies.
 
-The corrected dragon-egg fixture passed user-reported silk PLA selection and slicing, as well as an automated import/export check with the installed slicer. The filament metadata import defect found during manual testing is fixed in this candidate.
+Version 0.1.0 retains its two-minute update download timeout. If automatic updating fails on a slower connection, download and run this installer manually. Preferences and converted files are retained.
 
-The GitHub-built installer has a verified production Tauri updater signature and the public update endpoint configured. It is not Windows Authenticode signed. Earlier development packages have updates unconfigured. The installer and conversion were confirmed working by the user. End-to-end automatic updating has not been tested; the maintainer chose to publish without that test.
+Automated conversion, updater, release-configuration, and frontend checks passed. End-to-end installed updating and nested helper-volume layouts have not been verified. The installer uses Tauri updater signatures; Windows Authenticode signing is not configured.
 
-macOS is a proposed follow-up platform and is not supported by this package. See [platform assessment](https://github.com/eyedocnyc/kobra-drop/blob/main/docs/PLATFORMS.md).
+Choose your actual filament, slice, and check Preview after importing a converted project.

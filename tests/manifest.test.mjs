@@ -18,7 +18,8 @@ test("release manifest references the exact upload filename without spaces", () 
     const manifest = JSON.parse(fs.readFileSync(path.join(dir, "latest.json")));
     const platform = manifest.platforms["windows-x86_64"];
     const filename = new URL(platform.url).pathname.split("/").pop();
-    assert.equal(filename, "KobraDrop-0.1.0-windows-x64-setup.exe");
+    const version = JSON.parse(fs.readFileSync("package.json", "utf8")).version;
+    assert.equal(filename, `KobraDrop-${version}-windows-x64-setup.exe`);
     assert.equal(fs.readFileSync(path.join(dir, filename), "utf8"), "installer fixture");
     assert.equal(fs.readFileSync(path.join(dir, filename + ".sig"), "utf8"), platform.signature);
     assert.equal(fs.existsSync(path.join(dir, original)), false);
