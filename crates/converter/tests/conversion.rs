@@ -405,10 +405,12 @@ fn with_part(e: &mut Entries, z: &str, subtype: &str) {
         .unwrap()
         .replace("</resources>", &format!(r#"<object id="3"><mesh><vertices><vertex x="0" y="0" z="{z}"/><vertex x="5" y="0" z="{z}"/><vertex x="0" y="5" z="2"/></vertices><triangles><triangle v1="0" v2="1" v3="2"/></triangles></mesh></object></resources>"#));
     e.insert("3D/Objects/mesh.model".into(), mesh.into_bytes());
-    let root = String::from_utf8(e["3D/3dmodel.model"].clone()).unwrap().replace(
-        "</components>",
-        r#"<component objectid="3" p:path="/3D/Objects/mesh.model"/></components>"#,
-    );
+    let root = String::from_utf8(e["3D/3dmodel.model"].clone())
+        .unwrap()
+        .replace(
+            "</components>",
+            r#"<component objectid="3" p:path="/3D/Objects/mesh.model"/></components>"#,
+        );
     e.insert("3D/3dmodel.model".into(), root.into_bytes());
     let cfg = String::from_utf8(e["Metadata/model_settings.config"].clone())
         .unwrap()
