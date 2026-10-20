@@ -13,6 +13,13 @@ export function newerStable(current, candidate) {
   }
   return false;
 }
-export function canInstall({ converting, pending, selecting, installing }) {
-  return !converting && !pending && !selecting && !installing;
+// Installing exits the app, so a just-shown conversion result also defers it.
+export function canInstall({
+  converting,
+  pending,
+  selecting,
+  installing,
+  resultShown,
+}) {
+  return !converting && !pending && !selecting && !installing && !resultShown;
 }

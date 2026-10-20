@@ -1,4 +1,7 @@
 import { newerStable } from "./update-policy.mjs";
+// Tauri applies this to the whole download, not to idle time. The NSIS update
+// bundles the offline WebView2 installer (~210 MiB), so allow slow connections.
+export const DOWNLOAD_TIMEOUT_MS = 30 * 60 * 1000;
 /** The desktop adapter supplies the official Tauri updater. A rejected download
  * (including signature failure) can never become an installable result. */
 export async function fetchVerifiedUpdate({
@@ -35,7 +38,7 @@ export async function fetchVerifiedUpdate({
           status(`Downloading update… ${(bytes / 1048576).toFixed(1)} MB`);
         }
       },
-      { timeout: 120000 },
+      { timeout: DOWNLOAD_TIMEOUT_MS },
     );
     status(
       "Verified update ready. Installation waits until no file is pending.",

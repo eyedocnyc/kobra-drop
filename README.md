@@ -30,4 +30,4 @@ Build the local development installer with `npm run tauri build`. Artifacts are 
 
 The Rust core is independent of Tauri and can be tested on Linux. Its `convert` example is a developer fixture helper; it is not required by the desktop app. The workspace-local `.local/` directory and all model files are ignored by Git.
 
-See [conversion policy](docs/CONVERSION.md), [release setup](docs/RELEASING.md), and [validation record](docs/VALIDATION.md). No release has been published.
+See [conversion policy](docs/CONVERSION.md), [release setup](docs/RELEASING.md), and [validation record](docs/VALIDATION.md). Version 0.1.0 has been published; end-to-end automatic updating between installed versions has not yet been tested.
